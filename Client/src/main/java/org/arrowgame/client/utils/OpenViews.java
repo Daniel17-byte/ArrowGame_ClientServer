@@ -7,17 +7,15 @@ import org.arrowgame.client.view.LoginView;
 import org.arrowgame.client.view.RegisterView;
 
 public class OpenViews {
-    public void showLogin() {
-        LanguageManager.loadLanguage(CustomLocale.ENGLISH);
+    public static void showLogin(Stage primaryStage) {
         LoginView loginView = new LoginView();
-        Stage loginStage = new Stage();
 
-        loginStage.setScene(loginView);
-        loginStage.setTitle(LanguageManager.getString("loginButton"));
-        loginStage.show();
+        primaryStage.setScene(loginView);
+        primaryStage.setTitle(LanguageManager.getString("loginButton"));
+        primaryStage.show();
     }
 
-    public void showRegisterResult(String username, String password, String usertype, String language) {
+    public static void showRegisterResult(String username, String password, String usertype, String language) {
         boolean success = Endpoints.register(username, password, usertype);
 
         if (success) {
@@ -32,7 +30,7 @@ public class OpenViews {
 
     }
 
-    public void showLoginResult(String username, String password, String language) {
+    public static void showLoginResult(String username, String password, String language) {
         LanguageManager.loadLanguage(LanguageManager.fromStringToLocale(language));
         boolean success = Endpoints.authenticate(username, password);
 
@@ -47,7 +45,7 @@ public class OpenViews {
 
     }
 
-    public void openRegisterWindow() {
+    public static void openRegisterWindow() {
         Stage registerStage = new Stage();
         RegisterView registerView = new RegisterView();
 

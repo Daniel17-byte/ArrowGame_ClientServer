@@ -1,5 +1,6 @@
 package org.arrowgame.server.utils;
 
+import org.arrowgame.server.ServerApplication;
 import org.arrowgame.server.model.UserModel;
 
 import java.util.*;
@@ -7,9 +8,10 @@ import java.util.*;
 public class SessionManager {
     private static final Map<String, UserModel> sessions = new HashMap<>();
 
-    public static void createSession(UserModel user) {
+    public static String createSession(UserModel user) {
         String sessionId = generateSessionId();
         sessions.put(sessionId, user);
+        return sessionId;
     }
 
     @SuppressWarnings(value = "unused")
@@ -24,5 +26,14 @@ public class SessionManager {
 
     private static String generateSessionId() {
         return UUID.randomUUID().toString();
+    }
+
+    public static UserModel getUserFromSession() {
+        if (!isValidSession(ServerApplication.sessionID)){
+            return null;
+        }
+
+        return sessions.get(ServerApplication.sessionID);
+
     }
 }

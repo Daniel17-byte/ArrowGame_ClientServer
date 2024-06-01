@@ -1,5 +1,6 @@
 package org.arrowgame.server.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import java.util.Objects;
 
@@ -8,11 +9,19 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserModel {
-    private String id;
-    @Getter
+    @JsonProperty("id")
+    private Long id;
+
+    @JsonProperty("userName")
     private String userName;
+
+    @JsonProperty("password")
     private String password;
+
+    @JsonProperty("userType")
     private UserType userType;
+
+    @JsonProperty("gamesWon")
     private int gamesWon;
 
     public UserModel(String userName, String usertype, int gamesWon) {

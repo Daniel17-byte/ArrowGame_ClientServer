@@ -1,6 +1,7 @@
 package org.arrowgame.server.utils;
 
 import lombok.Getter;
+import org.arrowgame.server.ServerApplication;
 import org.arrowgame.server.model.UserModel;
 import org.springframework.stereotype.Repository;
 
@@ -36,7 +37,7 @@ public class DatabaseService {
                 int gamesWon = resultSet.getInt("gameswon");
 
                 user = new UserModel(usrN,usrT,gamesWon);
-                SessionManager.createSession(user);
+                ServerApplication.sessionID = SessionManager.createSession(user);
                 return true;
             }
             return false;
@@ -57,7 +58,7 @@ public class DatabaseService {
 
             if (rowsAffected > 0) {
                 user = new UserModel(username, usertype, 0);
-                SessionManager.createSession(user);
+                ServerApplication.sessionID = SessionManager.createSession(user);
                 return true;
             }
             return false;

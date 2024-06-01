@@ -4,7 +4,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans
                            http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/util https://www.springframework.org/schema/util/spring-util.xsd">
 
-    <bean id="databaseService" class="org.danielsa.proiect_ps.utils.DatabaseService">
+    <bean id="databaseService" class="org.arrowgame.server.utils.DatabaseService">
     </bean>
     <util:properties id="myProperties">
         <prop key="path">/Users/daniellungu/Desktop/PROIECT_PS/src/main/resources/images/</prop>

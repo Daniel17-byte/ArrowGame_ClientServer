@@ -13,6 +13,9 @@ target/
 .springBeans
 .sts4-cache
 
+.gitignore
+Documentation.docx
+
 ### IntelliJ IDEA ###
 .idea
 *.iws

@@ -1,19 +1,24 @@
 package org.arrowgame.client;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import javafx.application.Application;
+import javafx.stage.Stage;
+import org.arrowgame.client.utils.CustomLocale;
+import org.arrowgame.client.utils.LanguageManager;
+import org.arrowgame.client.utils.OpenViews;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.util.Properties;
 
-@SpringBootApplication
-@EnableDiscoveryClient
-public class ClientApplication {
+public class ClientApplication extends Application {
     public static ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
     public static String path = context.getBean("myProperties", Properties.class).getProperty("path");
     public static void main(String[] args) {
-        SpringApplication.run(ClientApplication.class, args);
+        launch(args);
     }
 
+    @Override
+    public void start(Stage primaryStage) throws Exception {
+        LanguageManager.loadLanguage(CustomLocale.ENGLISH);
+        OpenViews.showLogin(primaryStage);
+    }
 }

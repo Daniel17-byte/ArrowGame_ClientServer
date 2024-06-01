@@ -5,6 +5,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import lombok.Getter;
 import org.arrowgame.client.utils.LanguageManager;
+import org.arrowgame.client.utils.OpenViews;
 
 @Getter
 public class RegisterView extends Scene {
@@ -32,6 +33,9 @@ public class RegisterView extends Scene {
         languageComboBox.setPromptText("Language ");
 
         root.getChildren().addAll(usernameField, passwordField, userTypeComboBox, languageComboBox, registerButton, resultLabel);
+
+        registerButton.setOnMouseClicked(_ -> OpenViews.showRegisterResult(usernameField.getText(), passwordField.getText(),userTypeComboBox.getValue(), languageComboBox.getValue()));
+
     }
 
 }
