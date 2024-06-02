@@ -60,7 +60,7 @@ public class AdminView extends Scene {
         );
         addButton.setOnAction(_ -> {
             UserListElement user = Endpoints.addUser(userNameField.getText(), passwordField.getText(), userTypeComboBox.getValue());
-            userTableView.getItems().add(user); // aici nu apare in tabel
+            userTableView.getItems().add(user);
         });
         updateButton.setOnAction(_ -> {
             if (userTableView.getSelectionModel().getSelectedItem() != null) {
