@@ -1,7 +1,6 @@
 package org.arrowgame.client.utils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import javafx.scene.layout.GridPane;
 import org.arrowgame.client.responses.*;
 
 import java.io.IOException;
@@ -10,6 +9,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
+import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -40,51 +40,18 @@ public class Endpoints {
         }
     }
 
-    public static String userRegisterMove(int row, int col, String direction, GridPane board) {
+    public static List<ResultMoveResponse> userRegisterMove(int row, int col, String direction) {
         String url = String.format("%s/registerMove", BASE_URL);
 
-        MoveForm moveForm = new MoveForm(row, col, direction, board);
+        MoveForm moveForm = new MoveForm(row, col, direction);
         String requestBody;
 
         try {
             requestBody = objectMapper.writeValueAsString(moveForm);
         } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                .build();
-
-        try {
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                return response.body();
-            } else {
-                return null;
-            }
-        } catch (IOException | InterruptedException e) {
             System.out.println(e.getMessage());
             return null;
         }
-    }
-
-    public static UserForm addUser(String username, String password, String userType) {
-        String url = String.format("%s/addUser", BASE_URL);
-
-        AddUserForm addUserForm = new AddUserForm(username, password, userType);
-        String requestBody;
-
-        try {
-            requestBody = objectMapper.writeValueAsString(addUserForm);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
@@ -96,8 +63,9 @@ public class Endpoints {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 200) {
-                return objectMapper.readValue(response.body(), UserForm.class);
+                return objectMapper.readValue(response.body(), new TypeReference<List<ResultMoveResponse>>() {});
             } else {
+                System.out.println(STR."Error: \{response.statusCode()}");
                 return null;
             }
         } catch (IOException | InterruptedException e) {
@@ -153,7 +121,40 @@ public class Endpoints {
 
     }
 
-    public static ArrayList<UserForm> updateUser(String currentUsername, String newUsername, String newPassword, String userType) {
+    public static UserListElement addUser(String username, String password, String userType) {
+        String url = String.format("%s/addUser", BASE_URL);
+
+        AddUserForm addUserForm = new AddUserForm(username, password, userType);
+        String requestBody;
+
+        try {
+            requestBody = objectMapper.writeValueAsString(addUserForm);
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+            return null;
+        }
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+
+        try {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                return objectMapper.readValue(response.body(), UserListElement.class);
+            } else {
+                return null;
+            }
+        } catch (IOException | InterruptedException e) {
+            System.out.println(e.getMessage());
+            return null;
+        }
+    }
+
+    public static void updateUser(String currentUsername, String newUsername, String newPassword, String userType) {
         String url = String.format("%s/updateUser", BASE_URL);
 
         UpdateUserForm updateUserForm = new UpdateUserForm(new UserForm(currentUsername, newPassword, userType), newUsername, newPassword, userType);
@@ -162,8 +163,8 @@ public class Endpoints {
         try {
             requestBody = objectMapper.writeValueAsString(updateUserForm);
         } catch (IOException e) {
-            e.printStackTrace();
-            return null;
+            System.out.println(e.getMessage());
+            return;
         }
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -173,16 +174,9 @@ public class Endpoints {
                 .build();
 
         try {
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                return objectMapper.readValue(response.body(), new TypeReference<ArrayList<UserForm>>(){});
-            } else {
-                return null;
-            }
+            client.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (IOException | InterruptedException e) {
             System.out.println(e.getMessage());
-            return null;
         }
     }
 
@@ -204,7 +198,32 @@ public class Endpoints {
         }
     }
 
-    public static UserForm getUsers() {
+    public static ArrayList<MoveModel> undoMove() {
+        String url = String.format("%s/undo", BASE_URL);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Content-Type", "application/json")
+                .GET()
+                .build();
+
+        try {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                ObjectMapper mapper = new ObjectMapper();
+                return mapper.readValue(response.body(), new TypeReference<ArrayList<MoveModel>>() {});
+            } else {
+                System.out.println(STR."Failed to undo move: \{response.statusCode()}");
+                return null;
+            }
+        } catch (IOException | InterruptedException e) {
+            System.out.println(STR."Error occurred: \{e.getMessage()}");
+            return null;
+        }
+    }
+
+    public static String getUsers() {
         String url = String.format("%s/getUserList", BASE_URL);
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -216,7 +235,7 @@ public class Endpoints {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 200) {
-                return objectMapper.readValue(response.body(), UserForm.class);
+                return response.body();
             } else {
                 return null;
             }
@@ -230,30 +249,6 @@ public class Endpoints {
 
     }
 
-    public static void undoMove(GridPane board) {
-        String url = String.format("%s/undo", BASE_URL);
-
-        String requestBody;
-
-        try {
-            requestBody = objectMapper.writeValueAsString(new BoardForm(board));
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("Content-Type", "application/json")
-                .PUT(HttpRequest.BodyPublishers.ofString(requestBody))
-                .build();
-
-        try {
-            client.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (IOException | InterruptedException e) {
-            System.out.println(e.getMessage());
-        }
-    }
 
     public static UserResponse getUser() {
         String url = STR."\{BASE_URL}/getLoggedInUser";
@@ -268,6 +263,28 @@ public class Endpoints {
 
             if (response.statusCode() == 200) {
                 return objectMapper.readValue(response.body(), UserResponse.class);
+            } else {
+                return null;
+            }
+        } catch (IOException | InterruptedException e) {
+            System.out.println(e.getMessage());
+            return null;
+        }
+    }
+
+    public static List<UserListElement> getUsersList() {
+        String url = String.format("%s/getUsers", BASE_URL);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .GET()
+                .build();
+
+        try {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                return objectMapper.readValue(response.body(), new TypeReference<ArrayList<UserListElement>>() {});
             } else {
                 return null;
             }

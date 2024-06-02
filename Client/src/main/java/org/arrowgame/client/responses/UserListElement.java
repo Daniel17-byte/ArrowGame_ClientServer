@@ -9,8 +9,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class MoveForm {
-    private int row;
-    private int column;
-    private String selectedDirection;
+public class UserListElement {
+    private String userName;
+    private String userType;
+    private int gamesWon;
 }

@@ -9,10 +9,13 @@ import javafx.scene.layout.VBox;
 import lombok.Getter;
 import lombok.Setter;
 import org.arrowgame.client.responses.UserForm;
+import org.arrowgame.client.responses.UserListElement;
 import org.arrowgame.client.utils.Endpoints;
 import org.arrowgame.client.utils.LanguageManager;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 @Getter
 public class AdminView extends Scene {
@@ -22,10 +25,10 @@ public class AdminView extends Scene {
     private final Button addButton = new Button(LanguageManager.getString("addButton"));
     private final Button updateButton = new Button(LanguageManager.getString("updateButton"));
     private final Button deleteButton = new Button(LanguageManager.getString("deleteButton"));
-    private final TableView<UserForm> userTableView = new TableView<>();
+    private final TableView<UserListElement> userTableView = new TableView<>();
     private final Label resultLabel = new Label();
     @Setter
-    private UserForm selectedUser;
+    private UserListElement selectedUser;
 
 
     public AdminView() {
@@ -34,14 +37,13 @@ public class AdminView extends Scene {
     }
 
     public void initComponents() {
+        userTypeComboBox.getItems().addAll("ADMIN", "PLAYER");
 
-        userTypeComboBox.getItems().addAll(LanguageManager.getStringForKey("userTypeComboBox", "valueAdmin"), LanguageManager.getStringForKey("userTypeComboBox", "valuePlayer"));
-
-        TableColumn<UserForm, String> userNameColumn = new TableColumn<>(LanguageManager.getString("userNameColumn"));
+        TableColumn<UserListElement, String> userNameColumn = new TableColumn<>(LanguageManager.getString("userNameColumn"));
         userNameColumn.setCellValueFactory(new PropertyValueFactory<>("userName"));
-        TableColumn<UserForm, String> userTypeColumn = new TableColumn<>(LanguageManager.getString("userTypeColumn"));
+        TableColumn<UserListElement, String> userTypeColumn = new TableColumn<>(LanguageManager.getString("userTypeColumn"));
         userTypeColumn.setCellValueFactory(new PropertyValueFactory<>("userType"));
-        TableColumn<UserForm, Integer> gamesWonColumn = new TableColumn<>(LanguageManager.getString("gamesWonColumn"));
+        TableColumn<UserListElement, Integer> gamesWonColumn = new TableColumn<>(LanguageManager.getString("gamesWonColumn"));
         gamesWonColumn.setCellValueFactory(new PropertyValueFactory<>("gamesWon"));
         userTableView.getColumns().addAll(Arrays.asList(userNameColumn, userTypeColumn, gamesWonColumn));
 
@@ -56,19 +58,27 @@ public class AdminView extends Scene {
                 new HBox(addButton, updateButton, deleteButton),
                 userTableView
         );
-        addButton.setOnAction(_ -> Endpoints.addUser(userNameField.getText(), passwordField.getText(), userTypeComboBox.getValue()));
+        addButton.setOnAction(_ -> {
+            UserListElement user = Endpoints.addUser(userNameField.getText(), passwordField.getText(), userTypeComboBox.getValue());
+            userTableView.getItems().add(user); // aici nu apare in tabel
+        });
         updateButton.setOnAction(_ -> {
             if (userTableView.getSelectionModel().getSelectedItem() != null) {
                 Endpoints.updateUser(selectedUser.getUserName(), userNameField.getText(), passwordField.getText(), userTypeComboBox.getValue());
+                List<UserListElement> userListElements = Endpoints.getUsersList();
+                userTableView.getItems().setAll(Objects.requireNonNull(userListElements));
             }
         });
         deleteButton.setOnAction(_ -> {
             if (userTableView.getSelectionModel().getSelectedItem() != null) {
-                Endpoints.deleteUser(selectedUser.getUserName());
+                boolean success = Endpoints.deleteUser(selectedUser.getUserName());
+                if (success) {
+                    userTableView.getItems().remove(selectedUser);
+                }
             }
         });
 
-        userTableView.getItems().addAll(Endpoints.getUsers());
+        userTableView.getItems().addAll(Objects.requireNonNull(Endpoints.getUsersList()));
         userTableView.getSelectionModel().selectedItemProperty().addListener((_, _, newVal) -> setSelectedUser(newVal));
         setRoot(root);
     }

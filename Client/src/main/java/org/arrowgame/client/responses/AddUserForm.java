@@ -10,7 +10,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AddUserForm {
-    private String username;
+    private String userName;
     private String password;
     private String userType;
 }

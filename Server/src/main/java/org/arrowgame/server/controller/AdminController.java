@@ -1,12 +1,14 @@
 package org.arrowgame.server.controller;
 
-import org.arrowgame.server.forms.AddUserForm;
+import org.arrowgame.server.forms.UserForm;
 import org.arrowgame.server.forms.UpdateUserForm;
+import org.arrowgame.server.forms.UserListElement;
 import org.arrowgame.server.model.AdminModel;
 import org.arrowgame.server.model.UserModel;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 public class AdminController {
@@ -16,12 +18,14 @@ public class AdminController {
         this.model = new AdminModel();
     }
 
+
     @PostMapping("/addUser")
-    public UserModel addUser(@RequestBody AddUserForm addUserForm) {
-        boolean success = model.register(addUserForm.getUsername(), addUserForm.getPassword(), addUserForm.getUserType().name());
+    public UserListElement addUser(@RequestBody UserForm addUserForm) {
+        boolean success = model.register(addUserForm.getUserName(), addUserForm.getPassword(), addUserForm.getUserType());
 
         if (success) {
-            return model.getUserByUsername(addUserForm.getUsername());
+            UserModel u = model.getUserByUsername(addUserForm.getUserName());
+            return new UserListElement(u.getUserName(), u.getUserType().name(), u.getGamesWon());
         } else {
             System.out.println("User not added!");
         }
@@ -30,15 +34,12 @@ public class AdminController {
     }
 
     @PutMapping("/updateUser")
-    public ArrayList<UserModel> updateUser(@RequestBody UpdateUserForm updateUserForm) {
+    public void updateUser(@RequestBody UpdateUserForm updateUserForm) {
         UserModel updatedUser = model.updateUser(updateUserForm.getUserModel().getUserName(), updateUserForm.getUsername(), updateUserForm.getPassword(), updateUserForm.getUserType().name());
 
         if (updatedUser == null) {
             System.out.println("User not updated!");
-            return null;
         }
-
-        return model.getUsers();
     }
 
     @DeleteMapping("/deleteUser")
@@ -51,6 +52,13 @@ public class AdminController {
         }
 
         return true;
+    }
+
+    @GetMapping("/getUsers")
+    public List<UserListElement> getUsers() {
+        List<UserListElement> response = new ArrayList<>();
+        model.getUsers().forEach( u -> response.add(new UserListElement(u.getUserName(), u.getUserType().name(), u.getGamesWon())));
+        return response;
     }
 
 }
