@@ -1,9 +1,10 @@
 package org.arrowgame.server.controller;
 
+import org.arrowgame.server.forms.AddUserForm;
+import org.arrowgame.server.forms.UpdateUserForm;
 import org.arrowgame.server.model.AdminModel;
 import org.arrowgame.server.model.UserModel;
-import org.arrowgame.server.model.UserType;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 
@@ -15,11 +16,12 @@ public class AdminController {
         this.model = new AdminModel();
     }
 
-    public UserModel addUser(String username, String password, UserType userType) {
-        boolean success = model.register(username, password, userType.name());
+    @PostMapping("/addUser")
+    public UserModel addUser(@RequestBody AddUserForm addUserForm) {
+        boolean success = model.register(addUserForm.getUsername(), addUserForm.getPassword(), addUserForm.getUserType().name());
 
         if (success) {
-            return model.getUserByUsername(username);
+            return model.getUserByUsername(addUserForm.getUsername());
         } else {
             System.out.println("User not added!");
         }
@@ -27,8 +29,9 @@ public class AdminController {
         return null;
     }
 
-    public ArrayList<UserModel> updateUser(UserModel userModel, String username, String password, UserType userType) {
-        UserModel updatedUser = model.updateUser(userModel.getUserName(), username, password, userType.name());
+    @PutMapping("/updateUser")
+    public ArrayList<UserModel> updateUser(@RequestBody UpdateUserForm updateUserForm) {
+        UserModel updatedUser = model.updateUser(updateUserForm.getUserModel().getUserName(), updateUserForm.getUsername(), updateUserForm.getPassword(), updateUserForm.getUserType().name());
 
         if (updatedUser == null) {
             System.out.println("User not updated!");
@@ -38,7 +41,8 @@ public class AdminController {
         return model.getUsers();
     }
 
-    public boolean deleteUser(String username) {
+    @DeleteMapping("/deleteUser")
+    public boolean deleteUser(@RequestParam String username) {
         boolean success = model.deleteUser(username);
 
         if (!success) {

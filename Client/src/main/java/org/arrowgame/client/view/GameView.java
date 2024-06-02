@@ -15,8 +15,6 @@ import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import lombok.Getter;
-import lombok.Setter;
 import org.arrowgame.client.ClientApplication;
 import org.arrowgame.client.utils.Endpoints;
 import org.arrowgame.client.utils.LanguageManager;
@@ -26,8 +24,8 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Objects;
 
-@Getter
 public class GameView extends Scene {
     private final Button startGameButton = new Button(LanguageManager.getString("startGameButton"));
     private final Button restartButton = new Button(LanguageManager.getString("restartButton"));
@@ -41,11 +39,8 @@ public class GameView extends Scene {
     private final BorderPane borderPane = new BorderPane();
     private final BorderPane rightPane = new BorderPane();
     private final Label greetingLabel = new Label();
-    @Setter
     private GridPane board = new GridPane();
-    @Setter
     private GridPane gridLargeBoard = new GridPane();
-    @Setter
     private GridPane gridSmallBoard = new GridPane();
 
     public GameView() {
@@ -98,7 +93,7 @@ public class GameView extends Scene {
         vBox.setStyle(("-fx-background-color: #60c760;"));
 
         vBox.getChildren().add(greetingLabel);
-        greetingLabel.setText(LanguageManager.getString("greetingLabel") + " " + Endpoints.getUser().getUserName().toUpperCase());
+        greetingLabel.setText(STR."\{LanguageManager.getString("greetingLabel")} \{Objects.requireNonNull(Endpoints.getUser()).getUserName().toUpperCase()}");
 
 
         return vBox;
@@ -117,12 +112,12 @@ public class GameView extends Scene {
         AnchorPane.setTopAnchor(restartButton, 230.0);
         AnchorPane.setLeftAnchor(restartButton, 22.0);
 
-        restartButton.setOnAction(e -> clearBoard());
-        startGameButton.setOnAction(e -> {
+        restartButton.setOnAction(_ -> clearBoard());
+        startGameButton.setOnAction(_ -> {
             clearBoard();
-            String brd = Endpoints.clickedStartGame();
+            String brd = Endpoints.clickedStartGame(selectedDirection.getText());
             String[] directions = {"NE", "SE", "SW", "NW"};
-            if (brd.equals("small"))
+            if (brd != null && brd.equals("small"))
                 Arrays.stream(directions).forEach(d -> buttons.get(d).setVisible(false));
             else
                 Arrays.stream(directions).forEach( d -> buttons.get(d).setVisible(true));
@@ -145,7 +140,7 @@ public class GameView extends Scene {
         AnchorPane.setTopAnchor(undoButton, 191.0);
         AnchorPane.setLeftAnchor(undoButton, 22.0);
 
-        undoButton.setOnAction(e -> Endpoints.undoMove());
+        undoButton.setOnAction(e -> Endpoints.undoMove(board));
 
         leftPane.getChildren().addAll(startGameButton, restartButton, boardLabel, levelSelectChoiceBox, undoButton);
 
@@ -180,8 +175,8 @@ public class GameView extends Scene {
         HBox buttonRow = new HBox();
         buttonRow.setSpacing(2);
 
-        buttons.forEach((key, value) -> buttonRow.getChildren().add(value));
-        buttons.forEach((key, value) -> value.setOnAction( e -> {
+        buttons.forEach((_, value) -> buttonRow.getChildren().add(value));
+        buttons.forEach((_, value) -> value.setOnAction(_ -> {
             selectedDirection.setText(value.getText());
             doButtonEffect(value);
         }));
@@ -242,7 +237,7 @@ public class GameView extends Scene {
     }
 
     private Background setBgImage(String name) {
-        BackgroundImage b = new BackgroundImage(new Image(new File(ClientApplication.path + "g" + name).toURI().toString()), BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT);
+        BackgroundImage b = new BackgroundImage(new Image(new File(STR."\{ClientApplication.path}g\{name}").toURI().toString()), BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT);
         return new Background(b);
     }
 
@@ -308,7 +303,7 @@ public class GameView extends Scene {
 
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
-                ImageView imageView = new ImageView(new File(ClientApplication.path + "img.png").toURI().toString());
+                ImageView imageView = new ImageView(new File(STR."\{ClientApplication.path}img.png").toURI().toString());
                 imageView.setFitWidth(41.0);
                 imageView.setFitHeight(38.0);
                 GridPane.setMargin(imageView, new Insets(2));
@@ -329,7 +324,7 @@ public class GameView extends Scene {
         int row = GridPane.getRowIndex(selectedImage);
         int col = GridPane.getColumnIndex(selectedImage);
 
-        Endpoints.userRegisterMove(row, col);
+        Endpoints.userRegisterMove(row, col, selectedDirection.getText(), board);
     }
 
     public void clearBoard() {
@@ -338,7 +333,7 @@ public class GameView extends Scene {
             board.getChildren().stream()
                     .filter(node -> node instanceof ImageView)
                     .map(node -> (ImageView) node)
-                    .forEach(imageView -> imageView.setImage(new Image(new File(ClientApplication.path + "img.png").toURI().toString())));
+                    .forEach(imageView -> imageView.setImage(new Image(new File(STR."\{ClientApplication.path}img.png").toURI().toString())));
         }
         if(levelSelectChoiceBox.getValue().equals("4x4")){
             board = gridSmallBoard;

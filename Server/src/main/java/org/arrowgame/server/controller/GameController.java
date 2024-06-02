@@ -1,12 +1,17 @@
 package org.arrowgame.server.controller;
 
+import jakarta.ws.rs.PUT;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import org.arrowgame.server.ServerApplication;
+import org.arrowgame.server.forms.BoardForm;
+import org.arrowgame.server.forms.MoveForm;
+import org.arrowgame.server.forms.PlaceArrowForm;
+import org.arrowgame.server.forms.RemoveArrowForm;
 import org.arrowgame.server.model.*;
 import org.arrowgame.server.utils.MinMaxStrategy;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -20,15 +25,15 @@ public class GameController {
         this.model.getComputer().setStrategy(new MinMaxStrategy(4, 10));
     }
 
+    @PostMapping("/registerMove")
+    public String userRegisterMove(@RequestBody MoveForm moveForm) {
+        boolean valid = model.makeUserMove(new MoveModel(moveForm.getRow(), moveForm.getColumn(), new ArrowModel(model.getPlayer().getColor(), moveForm.getSelectedDirection())));
 
-    public String userRegisterMove(int row, int column, String selectedDirection, GridPane board) {
-        boolean valid = model.makeUserMove(new MoveModel(row, column, new ArrowModel(model.getPlayer().getColor(), selectedDirection)));
-
-        if(!valid || selectedDirection == null){
+        if(!valid || moveForm.getSelectedDirection() == null){
             return null;
         }
 
-        placeArrow(model.getPlayer().getColor(), selectedDirection, row, column, board);
+        placeArrow(new PlaceArrowForm(model.getPlayer().getColor(), moveForm.getSelectedDirection(), moveForm.getRow(), moveForm.getColumn(), moveForm.getBoard()));
 
         if(model.isEndgame()) {
             model.updateUserScore();
@@ -37,22 +42,26 @@ public class GameController {
 
         MoveModel moveModel = model.getSystemMove();
         if (moveModel != null){
-            placeArrow(model.getComputer().getColor(), moveModel.getArrowModel().getDirection(), moveModel.getX(), moveModel.getY(), board);
+            placeArrow(new PlaceArrowForm(model.getComputer().getColor(), moveModel.getArrowModel().getDirection(), moveModel.getX(), moveModel.getY(), moveForm.getBoard()));
         }
 
         if(model.isEndgame()) {
             return "computer";
         }
+
         return null;
     }
 
-    public void undoMove(GridPane board) {
+    @PutMapping("/undo")
+    public void undoMove(@RequestBody BoardForm boardForm) {
         MoveModel sysMoveModel = model.undo();
-        MoveModel usrMoveModel = model.undo();
-        if(sysMoveModel != null) removeArrow(sysMoveModel.getX(), sysMoveModel.getY(), board);
-        if(usrMoveModel != null) removeArrow(usrMoveModel.getX(), usrMoveModel.getY(), board);
+        MoveModel userMoveModel = model.undo();
+
+        if(sysMoveModel != null) removeArrow(new RemoveArrowForm(sysMoveModel.getX(), sysMoveModel.getY(), boardForm.getBoard()));
+        if(userMoveModel != null) removeArrow(new RemoveArrowForm(userMoveModel.getX(), userMoveModel.getY(), boardForm.getBoard()));
     }
 
+    @GetMapping("/getUserList")
     public String loadUserList() {
         ArrayList<UserModel> users = model.getUsers();
         StringBuilder stringBuilder = new StringBuilder();
@@ -62,12 +71,14 @@ public class GameController {
         return stringBuilder.toString();
     }
 
+    @GetMapping("/getGamesWon")
     public int loadWonGames() {
         UserModel user = model.getUser();
         return user.getGamesWon();
     }
 
-    public String clickedStartGame(String selectedBoard) {
+    @PutMapping("/startGame")
+    public String clickedStartGame(@RequestParam String selectedBoard) {
         String color = "g";
         String board;
 
@@ -87,29 +98,31 @@ public class GameController {
         }
     }
 
-    private void placeArrow(String color, String direction, int row, int column, GridPane board) {
-        Image image = new Image(new File(ServerApplication.path + color + direction + ".png").toURI().toString());
+    @PostMapping("/placeArrow")
+    private void placeArrow(@RequestBody PlaceArrowForm placeArrowForm) {
+        Image image = new Image(new File(ServerApplication.path + placeArrowForm.getColor() + placeArrowForm.getDirection() + ".png").toURI().toString());
 
-        board.getChildren().stream()
+        placeArrowForm.getBoard().getChildren().stream()
                 .filter(node -> node instanceof ImageView)
                 .map(node -> (ImageView) node)
                 .filter(imageView -> {
                     Integer rowIdx = GridPane.getRowIndex(imageView);
                     Integer colIdx = GridPane.getColumnIndex(imageView);
-                    return rowIdx != null && colIdx != null && rowIdx == row && colIdx == column;
+                    return rowIdx != null && colIdx != null && rowIdx == placeArrowForm.getRow() && colIdx == placeArrowForm.getColumn();
                 })
                 .findFirst()
                 .ifPresent(imageView -> imageView.setImage(image));
     }
 
-    private void removeArrow(int row, int column, GridPane board) {
-        board.getChildren().stream()
+    @PostMapping("/removeArrow")
+    private void removeArrow(@RequestBody RemoveArrowForm removeArrowForm) {
+        removeArrowForm.getBoard().getChildren().stream()
                 .filter(node -> node instanceof ImageView)
                 .map(node -> (ImageView) node)
                 .filter(imageView -> {
                     Integer rowIdx = GridPane.getRowIndex(imageView);
                     Integer colIdx = GridPane.getColumnIndex(imageView);
-                    return rowIdx != null && colIdx != null && rowIdx == row && colIdx == column;
+                    return rowIdx != null && colIdx != null && rowIdx == removeArrowForm.getRow() && colIdx == removeArrowForm.getColumn();
                 })
                 .findFirst()
                 .ifPresent(imageView -> imageView.setImage(new Image(new File(ServerApplication.path + "img.png").toURI().toString())));
