@@ -15,5 +15,6 @@ public class UserResponse {
         private String password;
         private UserType userType;
         private int gamesWon;
-
+        private String email;
+        private String phoneNumber;
 }

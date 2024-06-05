@@ -9,4 +9,5 @@ public class MoveForm {
     private int row;
     private int column;
     private String selectedDirection;
+    private int difficulty;
 }

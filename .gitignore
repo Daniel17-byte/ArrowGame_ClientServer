@@ -15,6 +15,9 @@ target/
 
 .gitignore
 Documentation.docx
+Documentation.pdf
+users.json
+users.xml
 
 ### IntelliJ IDEA ###
 .idea

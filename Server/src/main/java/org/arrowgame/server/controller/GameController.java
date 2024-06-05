@@ -32,7 +32,7 @@ public class GameController {
         list.add(resultMoveResponseUser);
 
         if(model.isEndgame()) {
-            model.updateUserScore();
+            model.updateUserScore(moveForm.getDifficulty());
             resultMoveResponseUser.setUser(true);
             resultMoveResponseUser.setWinner(true);
             return list;
@@ -80,8 +80,15 @@ public class GameController {
         return user.getGamesWon();
     }
 
+    @GetMapping("/getGames")
+    public List<GameDbModel> getGames() {
+        return model.getGames();
+    }
+
     @PutMapping("/startGame")
     public String clickedStartGame(@RequestParam String selectedBoard) {
+        model.clearBoard();
+
         String color = "g";
         String board;
 

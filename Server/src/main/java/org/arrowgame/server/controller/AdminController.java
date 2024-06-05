@@ -5,16 +5,20 @@ import org.arrowgame.server.forms.UpdateUserForm;
 import org.arrowgame.server.forms.UserListElement;
 import org.arrowgame.server.model.AdminModel;
 import org.arrowgame.server.model.UserModel;
+import org.arrowgame.server.utils.EmailService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 public class AdminController {
     private final AdminModel model;
+    private final EmailService emailService;
 
-    public AdminController() {
+    public AdminController(EmailService emailService) {
+        this.emailService = emailService;
         this.model = new AdminModel();
     }
 
@@ -40,6 +44,17 @@ public class AdminController {
         if (updatedUser == null) {
             System.out.println("User not updated!");
         }
+
+        if (updatedUser != null) {
+            UserModel userModel = model.getUserByUsername(Objects.requireNonNull(updatedUser).getUserName());
+            emailService.sendEmail(userModel.getEmail(), "NEW DATA", userModel.data());
+        }
+
+    }
+
+    @GetMapping("/sendMail")
+    public void sendMail() {
+        emailService.sendEmail("lungud63@yahoo.com", "NEW DATA", "data");
     }
 
     @DeleteMapping("/deleteUser")

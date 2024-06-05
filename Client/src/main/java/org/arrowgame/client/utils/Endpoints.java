@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jetbrains.annotations.Nullable;
 
 public class Endpoints {
     private static final String BASE_URL = "http://localhost:9180";
@@ -26,24 +27,13 @@ public class Endpoints {
                 .PUT(HttpRequest.BodyPublishers.noBody())
                 .build();
 
-        try {
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                return response.body();
-            } else {
-                return null;
-            }
-        } catch (IOException | InterruptedException e) {
-            System.out.println(e.getMessage());
-            return null;
-        }
+        return getBody(request);
     }
 
-    public static List<ResultMoveResponse> userRegisterMove(int row, int col, String direction) {
+    public static List<ResultMoveResponse> userRegisterMove(int row, int col, String direction, int difficulty) {
         String url = String.format("%s/registerMove", BASE_URL);
 
-        MoveForm moveForm = new MoveForm(row, col, direction);
+        MoveForm moveForm = new MoveForm(row, col, direction, difficulty);
         String requestBody;
 
         try {
@@ -63,7 +53,7 @@ public class Endpoints {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 200) {
-                return objectMapper.readValue(response.body(), new TypeReference<List<ResultMoveResponse>>() {});
+                return objectMapper.readValue(response.body(), new TypeReference<>() {});
             } else {
                 System.out.println(STR."Error: \{response.statusCode()}");
                 return null;
@@ -84,6 +74,10 @@ public class Endpoints {
                 .GET()
                 .build();
 
+        return getBooleanFromResponse(client, request);
+    }
+
+    private static boolean getBooleanFromResponse(HttpClient client, HttpRequest request) {
         try {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
@@ -106,18 +100,7 @@ public class Endpoints {
                 .POST(HttpRequest.BodyPublishers.noBody())
                 .build();
 
-        try {
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                return Boolean.parseBoolean(response.body());
-            } else {
-                return false;
-            }
-        } catch (IOException | InterruptedException e) {
-            System.out.println(e.getMessage());
-            return false;
-        }
+        return getBooleanFromResponse(client, request);
 
     }
 
@@ -212,7 +195,7 @@ public class Endpoints {
 
             if (response.statusCode() == 200) {
                 ObjectMapper mapper = new ObjectMapper();
-                return mapper.readValue(response.body(), new TypeReference<ArrayList<MoveModel>>() {});
+                return mapper.readValue(response.body(), new TypeReference<>() {});
             } else {
                 System.out.println(STR."Failed to undo move: \{response.statusCode()}");
                 return null;
@@ -231,6 +214,11 @@ public class Endpoints {
                 .GET()
                 .build();
 
+        return getBody(request);
+    }
+
+    @Nullable
+    private static String getBody(HttpRequest request) {
         try {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
@@ -243,10 +231,6 @@ public class Endpoints {
             System.out.println(e.getMessage());
             return null;
         }
-    }
-
-    public static void clearBoard() {
-
     }
 
 
@@ -293,4 +277,28 @@ public class Endpoints {
             return null;
         }
     }
+
+    public static List<GameResponse> getGames() {
+        String url = String.format("%s/getGames", BASE_URL);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .GET()
+                .build();
+
+        try {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                return objectMapper.readValue(response.body(), new TypeReference<>() {});
+            } else {
+                System.out.println(STR."Error: \{response.statusCode()}");
+                return null;
+            }
+        } catch (IOException | InterruptedException e) {
+            System.out.println(e.getMessage());
+            return null;
+        }
+    }
+
 }

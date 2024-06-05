@@ -15,6 +15,8 @@ module org.arrowgame.client {
     requires org.json;
     requires java.net.http;
     requires com.fasterxml.jackson.databind;
+    requires com.fasterxml.jackson.dataformat.xml;
+    requires annotations;
     opens org.arrowgame.client.responses to com.fasterxml.jackson.databind, javafx.base;
 
     opens org.arrowgame.client to javafx.fxml;

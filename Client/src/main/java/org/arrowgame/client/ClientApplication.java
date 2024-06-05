@@ -17,7 +17,7 @@ public class ClientApplication extends Application {
     }
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
+    public void start(Stage primaryStage) {
         LanguageManager.loadLanguage(CustomLocale.ENGLISH);
         OpenViews.showLogin(primaryStage);
     }

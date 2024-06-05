@@ -5,6 +5,7 @@ import org.arrowgame.server.ServerApplication;
 import org.arrowgame.server.utils.DatabaseService;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
 
 public class GameModel {
@@ -68,12 +69,15 @@ public class GameModel {
         return databaseService.getUser();
     }
 
-    public void updateUserScore() {
-        databaseService.updateUserScore();
+    public void updateUserScore(int difficulty) {
+        databaseService.updateUserScore(difficulty);
     }
 
     public ArrayList<UserModel> getUsers() {
         return databaseService.getUsers();
     }
 
+    public List<GameDbModel> getGames() {
+        return databaseService.getGames();
+    }
 }

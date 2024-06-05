@@ -2,11 +2,13 @@ package org.arrowgame.server.utils;
 
 import lombok.Getter;
 import org.arrowgame.server.ServerApplication;
+import org.arrowgame.server.model.GameDbModel;
 import org.arrowgame.server.model.UserModel;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.List;
 
 @Repository
 public class DatabaseService {
@@ -125,7 +127,7 @@ public class DatabaseService {
         return false;
     }
 
-    public void updateUserScore() {
+    public void updateUserScore(int difficulty) {
         String query = "UPDATE users SET gameswon = gameswon + 1 WHERE username = ?";
         try (PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, getUser().getUserName());
@@ -134,6 +136,7 @@ public class DatabaseService {
             System.out.println(e.getMessage());
         }
         user = getUserByUsername(user.getUserName());
+        addGame(user.getUserName(), difficulty);
     }
 
     public UserModel getUserByUsername(String username) {
@@ -147,11 +150,42 @@ public class DatabaseService {
                 String usrN = resultSet.getString("username");
                 String usrT = resultSet.getString("userType");
                 int gamesWon = resultSet.getInt("gameswon");
-                return new UserModel(usrN, usrT, gamesWon);
+                String email = resultSet.getString("email");
+                String phoneNumber = resultSet.getString("phoneNumber");
+                return new UserModel(usrN, usrT, gamesWon, email, phoneNumber);
             }
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
         return null;
+    }
+
+    public void addGame(String username, int difficulty) {
+        String query = "INSERT INTO games (username, difficulty) VALUES (?, ?)";
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, username);
+            statement.setInt(2, difficulty);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public List<GameDbModel> getGames() {
+        List<GameDbModel> games = new ArrayList<>();
+        String query = "SELECT * FROM games";
+        try (PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
+            while (resultSet.next()) {
+                games.add(new GameDbModel(
+                        resultSet.getLong("id"),
+                        resultSet.getString("username"),
+                        resultSet.getInt("difficulty")
+                ));
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return games;
     }
 }

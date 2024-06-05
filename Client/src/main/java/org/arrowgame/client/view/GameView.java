@@ -40,6 +40,7 @@ public class GameView extends Scene {
     private GridPane board = new GridPane();
     private GridPane gridLargeBoard = new GridPane();
     private GridPane gridSmallBoard = new GridPane();
+    private int difficulty = 1;
 
     public GameView() {
         super(new VBox(), 900, 500);
@@ -64,7 +65,7 @@ public class GameView extends Scene {
             buttons.put(direction, new Button(direction));
         }
 
-        buttons.forEach( (k, b) -> initializeButton(b));
+        buttons.forEach( (_, b) -> initializeButton(b));
 
         VBox root = (VBox) getRoot();
 
@@ -129,7 +130,7 @@ public class GameView extends Scene {
         undoButton.setOnAction(_ -> {
             List<MoveModel> response = Endpoints.undoMove();
             if (response != null && !response.isEmpty()) {
-                response.forEach( r -> removeArrow(r.getX(), r.getY(), board));
+                response.forEach( r -> manageArrow("remove", null, null, r.getX(), r.getY(), board));
             }
         });
 
@@ -147,8 +148,10 @@ public class GameView extends Scene {
             String brd = Endpoints.clickedStartGame(levelSelectChoiceBox.getValue());
             String[] directions = {"NE", "SE", "SW", "NW"};
             if (brd != null && brd.equals("small")) {
+                difficulty = 1;
                 Arrays.stream(directions).forEach(d -> buttons.get(d).setVisible(false));
             } else {
+                difficulty = 2;
                 Arrays.stream(directions).forEach( d -> buttons.get(d).setVisible(true));
             }
 
@@ -173,9 +176,8 @@ public class GameView extends Scene {
         VBox.setMargin(rightPane, new Insets(0, 0, 0, 0));
         BorderPane.setAlignment(rightPane, Pos.CENTER_RIGHT);
 
-        if (user.getUserType().equals(UserType.ADMIN)) {
-            setUsersPanel();
-        }
+
+        setUsersPanel(user);
 
         return rightPanel;
     }
@@ -233,7 +235,7 @@ public class GameView extends Scene {
     }
 
     public void initializeButton(Button button) {
-        button.setBackground(setBgImage(button.getText() + ".png"));
+        button.setBackground(setBgImage(STR."\{button.getText()}.png"));
         button.setVisible(true);
         button.setAlignment(javafx.geometry.Pos.BOTTOM_RIGHT);
         button.setContentDisplay(javafx.scene.control.ContentDisplay.CENTER);
@@ -274,20 +276,22 @@ public class GameView extends Scene {
         dialogVbox.setAlignment(Pos.CENTER);
         dialogVbox.getChildren().add(new Text(winner.toUpperCase() + LanguageManager.getString("wins")));
         Scene dialogScene = new Scene(dialogVbox, 150, 100);
-        dialogVbox.setOnMouseClicked(e -> dialog.close());
+        dialogVbox.setOnMouseClicked(_ -> dialog.close());
         dialog.setScene(dialogScene);
         dialog.show();
     }
 
-    public void setUsersPanel() {
+    public void setUsersPanel(UserResponse user) {
         usersPane.setText(Endpoints.getUsers());
         usersPane.setEditable(false);
         usersPane.setPrefSize(180, 300);
         BorderPane.setMargin(usersPane, new Insets(10, 0, 0, 10));
         rightPane.setCenter(usersPane);
-        rightPane.setBottom(manageUsersButton);
-        manageUsersButton.setOnAction(_ -> OpenViews.clickedManageUsersButton());
-        BorderPane.setMargin(manageUsersButton, new Insets(10, 0, 0, 10));
+        if (user.getUserType().equals(UserType.ADMIN)) {
+            rightPane.setBottom(manageUsersButton);
+            manageUsersButton.setOnAction(_ -> OpenViews.clickedManageUsersButton());
+            BorderPane.setMargin(manageUsersButton, new Insets(10, 0, 0, 10));
+        }
     }
 
     public GridPane initBoard(String sizeS) {
@@ -335,13 +339,17 @@ public class GameView extends Scene {
         int row = GridPane.getRowIndex(selectedImage);
         int col = GridPane.getColumnIndex(selectedImage);
 
-        List<ResultMoveResponse> response = Endpoints.userRegisterMove(row, col, selectedDirection.getText());
+        List<ResultMoveResponse> response = Endpoints.userRegisterMove(row, col, selectedDirection.getText(), difficulty);
 
         if (response != null && !response.isEmpty()) {
             response.forEach( r -> {
-                placeArrow(r.getColor(), r.getDirection(), r.getRow(), r.getColumn(), board);
+                manageArrow("place", r.getColor(), r.getDirection(), r.getRow(), r.getColumn(), board);
                 if (r.isWinner()) {
-                    signalEndgame(String.valueOf(r.isUser()));
+                    if (r.isUser()) {
+                        signalEndgame(Objects.requireNonNull(Endpoints.getUser()).getUserName());
+                    } else {
+                        signalEndgame(LanguageManager.getString("computer"));
+                    }
                 }
             });
         }
@@ -350,7 +358,6 @@ public class GameView extends Scene {
 
     public void clearBoard() {
         if(board != null){
-            Endpoints.clearBoard();
             board.getChildren().stream()
                     .filter(node -> node instanceof ImageView)
                     .map(node -> (ImageView) node)
@@ -363,9 +370,7 @@ public class GameView extends Scene {
         }
     }
 
-    private void placeArrow(String color, String direction, int row, int column, GridPane board) {
-        Image image = new Image(new File(STR."\{ClientApplication.path}\{color}\{direction}.png").toURI().toString());
-
+    public void manageArrow(String action, String color, String direction, int row, int column, GridPane board) {
         board.getChildren().stream()
                 .filter(node -> node instanceof ImageView)
                 .map(node -> (ImageView) node)
@@ -375,20 +380,19 @@ public class GameView extends Scene {
                     return rowIdx != null && colIdx != null && rowIdx == row && colIdx == column;
                 })
                 .findFirst()
-                .ifPresent(imageView -> imageView.setImage(image));
+                .ifPresent(imageView -> {
+                    switch (action.toLowerCase()) {
+                        case "place":
+                            Image image = new Image(new File(STR."\{ClientApplication.path}\{color}\{direction}.png").toURI().toString());
+                            imageView.setImage(image);
+                            break;
+                        case "remove":
+                            Image defaultImage = new Image(new File(STR."\{ClientApplication.path}img.png").toURI().toString());
+                            imageView.setImage(defaultImage);
+                            break;
+                        default:
+                            throw new IllegalArgumentException(STR."Unknown action: \{action}");
+                    }
+                });
     }
-
-    private void removeArrow(int row, int column, GridPane board) {
-        board.getChildren().stream()
-                .filter(node -> node instanceof ImageView)
-                .map(node -> (ImageView) node)
-                .filter(imageView -> {
-                    Integer rowIdx = GridPane.getRowIndex(imageView);
-                    Integer colIdx = GridPane.getColumnIndex(imageView);
-                    return rowIdx != null && colIdx != null && rowIdx == row && colIdx == column;
-                })
-                .findFirst()
-                .ifPresent(imageView -> imageView.setImage(new Image(new File(STR."\{ClientApplication.path}img.png").toURI().toString())));
-    }
-
 }
