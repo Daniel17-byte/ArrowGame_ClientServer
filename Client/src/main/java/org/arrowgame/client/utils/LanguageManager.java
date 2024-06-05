@@ -6,6 +6,7 @@ import org.json.JSONTokener;
 import java.io.InputStream;
 
 public class LanguageManager {
+    private static LanguageManager instance;
     private static JSONObject currentLanguage;
 
     public static CustomLocale fromStringToLocale(String language) {
@@ -19,9 +20,19 @@ public class LanguageManager {
         };
     }
 
+    private LanguageManager() {
+    }
+
+    public static synchronized LanguageManager getInstance() {
+        if (instance == null) {
+            instance = new LanguageManager();
+        }
+        return instance;
+    }
+
     public static void loadLanguage(CustomLocale locale) {
         try {
-            InputStream is = LanguageManager.class.getResourceAsStream("/languages/" + locale.language() + ".json");
+            InputStream is = LanguageManager.class.getResourceAsStream(STR."/languages/\{locale.language()}.json");
             if (is == null) {
                 is = LanguageManager.class.getResourceAsStream("/languages/en.json");
             }
@@ -37,22 +48,22 @@ public class LanguageManager {
     }
 
     public static String getString(String key) {
-        return currentLanguage.optString(key, "Key not found: " + key);
+        return currentLanguage.optString(key, STR."Key not found: \{key}");
     }
 
     public static String getStringForKey(String parentKey, String childKey) {
         JSONObject parentObject = currentLanguage.optJSONObject(parentKey);
 
         if (parentObject == null) {
-            return "Parent key not found: " + parentKey;
+            return STR."Parent key not found: \{parentKey}";
         }
 
         Object value = parentObject.opt(childKey);
 
         if (value == null) {
-            return "Child key not found: " + childKey;
+            return STR."Child key not found: \{childKey}";
         } else if (!(value instanceof String)) {
-            return "Invalid value for child key: " + childKey;
+            return STR."Invalid value for child key: \{childKey}";
         }
 
         return (String) value;

@@ -5,7 +5,8 @@ import org.arrowgame.server.forms.UpdateUserForm;
 import org.arrowgame.server.forms.UserListElement;
 import org.arrowgame.server.model.AdminModel;
 import org.arrowgame.server.model.UserModel;
-import org.arrowgame.server.utils.EmailService;
+import org.arrowgame.server.utils.SenderService;
+import org.arrowgame.server.utils.SenderServiceFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -15,10 +16,11 @@ import java.util.Objects;
 @RestController
 public class AdminController {
     private final AdminModel model;
-    private final EmailService emailService;
+    private final SenderServiceFactory senderServiceFactory;
 
-    public AdminController(EmailService emailService) {
-        this.emailService = emailService;
+
+    public AdminController(SenderServiceFactory senderServiceFactory) {
+        this.senderServiceFactory = senderServiceFactory;
         this.model = new AdminModel();
     }
 
@@ -47,15 +49,26 @@ public class AdminController {
 
         if (updatedUser != null) {
             UserModel userModel = model.getUserByUsername(Objects.requireNonNull(updatedUser).getUserName());
-            emailService.sendEmail(userModel.getEmail(), "NEW DATA", userModel.data());
+            SenderService smsService = senderServiceFactory.getSenderService("SMS");
+            SenderService emailService = senderServiceFactory.getSenderService("EMAIL");
+            emailService.send(userModel.getEmail(), userModel.data());
+            smsService.send(userModel.getPhoneNumber(), userModel.data());
         }
 
     }
 
     @GetMapping("/sendMail")
     public void sendMail() {
-        emailService.sendEmail("lungud63@yahoo.com", "NEW DATA", "data");
+        SenderService emailService = senderServiceFactory.getSenderService("EMAIL");
+        emailService.send("lungud63@yahoo.com", "data");
     }
+
+    @GetMapping("/sendSMS")
+    public void sendSms() {
+        SenderService smsService = senderServiceFactory.getSenderService("SMS");
+        smsService.send("+40748627151", "SALUT de pe twilio!");
+    }
+
 
     @DeleteMapping("/deleteUser")
     public boolean deleteUser(@RequestParam String username) {
