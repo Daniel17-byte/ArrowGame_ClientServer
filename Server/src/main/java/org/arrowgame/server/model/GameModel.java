@@ -3,6 +3,7 @@ package org.arrowgame.server.model;
 import lombok.Getter;
 import org.arrowgame.server.ServerApplication;
 import org.arrowgame.server.utils.DatabaseService;
+import org.arrowgame.server.utils.MinMaxStrategy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +20,7 @@ public class GameModel {
 
     public GameModel() {
         this.databaseService = ServerApplication.context.getBean(DatabaseService.class);
-        this.computer = new ComputerModel("r");
+        this.computer = new ComputerModel("r", new MinMaxStrategy(8,16));
         this.player = new PlayerModel("g");
         this.board = new GameBoardModel(8);
         this.moveModelStack = new Stack<>();

@@ -6,7 +6,7 @@ import org.arrowgame.server.model.MoveModel;
 import java.util.*;
 import java.util.stream.IntStream;
 
-public class MinMaxStrategy {
+public class MinMaxStrategy implements Strategy {
     private final int maxDepth;
     private final int maxMoves;
 
@@ -19,6 +19,7 @@ public class MinMaxStrategy {
         return board.noValidMoves();
     }
 
+    @Override
     public MoveModel makeMove(GameBoardModel board) {
         return board.getValidMoves().stream()
                 .limit(maxMoves)
